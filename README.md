@@ -7,6 +7,23 @@ This package includes useful ioutil extensions that can be used to manipulate or
 
 To get the package use `go get -u github.com/npart/iofactory`.  The tests have pretty extensive use cases for these objects, which should be fairly self explanatory.
 
-### MaxReader
+### MaxSizeReader
 
-test
+The MaxSizeReader will create a reader where each resulting read will be limited to a maximum size.  ioutil.ReadAll(), for example, may call Read() with a very large buffer, but the MaxSizeReader will limit each read to N bytes.  This is useful if the goal is to limit reads to smaller chunks.
+
+```
+# File
+input, _ := os.Open("input.txt")
+chunkedInput := NewMaxSizeReader(input, 1024) // read the whole file, but only read 1024 bytes at a time
+io.Copy(os.Stdout, chunkedInput)
+
+# Network (echo back to client)
+ln, err := net.Listen("tcp", ":8080")
+for {
+	conn, err := ln.Accept()
+  go func() {
+    defer conn.Close()
+    chunkedInput := NewMaxSizeReader(conn, 16) // echo full input stream, but a maximum of 16 bytes at a time  
+    io.Copy(conn, chunkedInput)
+  }()
+}
