@@ -7,6 +7,6 @@ This package includes useful ioutil extensions that can be used to manipulate or
 
 To get the package use `go get -u github.com/npart/iofactory`.  The tests have pretty extensive use cases for these objects, which should be fairly self explanatory.
 
-## MaxReader
+### MaxReader
 
 test
