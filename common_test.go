@@ -1,3 +1,4 @@
+// Copyright (c) 2018 Isaac Gremmer, released under MIT License. See LICENSE file.
 package iofactory
 
 import (
