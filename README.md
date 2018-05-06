@@ -20,7 +20,7 @@ io.Copy(os.Stdout, chunkedInput)
 # Network (echo back to client)
 ln, err := net.Listen("tcp", ":8080")
 for {
-	conn, err := ln.Accept()
+  conn, err := ln.Accept()
   go func() {
     defer conn.Close()
     chunkedInput := NewMaxSizeReader(conn, 16) // echo full input stream, but a maximum of 16 bytes at a time  
@@ -45,7 +45,8 @@ for {
 # Bytes with maximum read size
 input, _ := os.Open("input.txt")
 randomSizeReader := NewMaxSizeReader(NewRandomSizeReader(input), 128)
-// the whole file will be read to buf, but each read will be between 1 and 128 bytes even though ioutil.ReadAll() will call Read() with a much larger buffer size
+// the whole file will be read to buf, but each read will be between 1 and 128 bytes 
+// even though ioutil.ReadAll() will call Read() with a much larger buffer size
 buf, err := ioutil.ReadAll(randomSizeReader)
 ```
 
