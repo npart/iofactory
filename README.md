@@ -20,12 +20,12 @@ io.Copy(os.Stdout, chunkedInput)
 // Network (echo back to client) (requires client to be functional)
 ln, _ := net.Listen("tcp", ":8080")
 for {
-	conn, _ := ln.Accept()
-	go func() {
-		defer conn.Close()
-		chunkedInput := iofactory.NewMaxSizeReader(conn, 16) // echo full input stream, but a maximum of 16 bytes at a time
-		io.Copy(conn, chunkedInput)
-	}()
+  conn, _ := ln.Accept()
+  go func() {
+    defer conn.Close()
+    chunkedInput := iofactory.NewMaxSizeReader(conn, 16) // echo full input stream, but a maximum of 16 bytes at a time
+    io.Copy(conn, chunkedInput)
+  }()
 }
 ```
 
@@ -40,12 +40,12 @@ defer input.Close()
 randomSizeReader := iofactory.NewRandomSizeReader(input)
 totalRead := 0
 for {
-	buf := make([]byte, 1024)
-	n, err := randomSizeReader.Read(buf) // each read will be between 1 and 1024 bytes
-	totalRead += n
-	if err != nil {
-		break
-	}
+  buf := make([]byte, 1024)
+  n, err := randomSizeReader.Read(buf) // each read will be between 1 and 1024 bytes
+  totalRead += n
+  if err != nil {
+    break
+  }
 }
 log.Printf("Read %v bytes from file", totalRead)
 
@@ -60,3 +60,13 @@ buf, _ := ioutil.ReadAll(randomSizeReader)
 log.Printf("%v", string(buf))
 ```
 
+### BytesRepeatedReader
+
+NewBytesRepeatedReader returns a reader that is similar to bytes.NewReader
+but allows N iterations.  If N is negative then this will repeat forever.
+
+```Go
+buf := []byte("hello world")
+reader := iofactory.NewBytesRepeatedReader(buf, 3)
+io.Copy(os.Stdout, reader)
+```
