@@ -14,7 +14,7 @@ import (
 // These are the examples that are part of the README.md
 
 func exampleMaxSizeReader() {
-	// File
+	// Read from file
 	input, _ := os.Open("input.txt")
 	chunkedInput := iofactory.NewMaxSizeReader(input, 1024) // read the whole file, but only read 1024 bytes at a time
 	io.Copy(os.Stdout, chunkedInput)
@@ -62,8 +62,14 @@ func exampleRandomAndMaxSizeReader() {
 	log.Printf("%v", string(buf))
 }
 
+func exampleBytesRepeatedReader() {
+	buf := []byte("hello world")
+	reader := iofactory.NewBytesRepeatedReader(buf, 3)
+	io.Copy(os.Stdout, reader)
+}
 func main() {
 	exampleMaxSizeReader()
 	exampleRandomSizeReader()
 	exampleRandomAndMaxSizeReader()
+	exampleBytesRepeatedReader()
 }
