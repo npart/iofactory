@@ -9,19 +9,20 @@ import (
 
 // BufferedReader is
 type BufferedReader struct {
-	upstream                  io.Reader
-	totalRead                 int64
-	totalReadReturned         int64
-	totalWritten              int64
-	currentReadChunkAvailable int
-	currentReadChunkSize      int
-	buffer                    []byte
-	bufferSize                int64
-	readsAvailable            chan int
-	readsCompleted            chan int
-	exitSignal                chan bool
-	closeOnce                 sync.Once
-	errToReturn               error
+	upstream                     io.Reader
+	totalRead                    int64
+	totalReadReturned            int64
+	totalWritten                 int64
+	currentReadChunkAvailable    int
+	currentReadChunkSize         int
+	buffer                       []byte
+	bufferSize                   int64
+	readsAvailable               chan int
+	readsAvailableSlotsAvailable int
+	readsCompleted               chan int
+	exitSignal                   chan bool
+	closeOnce                    sync.Once
+	errToReturn                  error
 }
 
 // NewBufferedReader is used to create a new buffered reader (BufferedReader).
@@ -31,13 +32,16 @@ func NewBufferedReader(upstream io.Reader, bufferSize, readSize int) (*BufferedR
 		return nil, fmt.Errorf("bufferSize must be positive, and bufferSize must be at least as large as readSize")
 	}
 
+	channelsSlots := 128
+
 	br := BufferedReader{
-		upstream:       upstream,
-		buffer:         make([]byte, bufferSize),
-		bufferSize:     int64(bufferSize),
-		readsAvailable: make(chan int, 1024),
-		readsCompleted: make(chan int, 1024),
-		exitSignal:     make(chan bool, 0),
+		upstream:                     upstream,
+		buffer:                       make([]byte, bufferSize),
+		bufferSize:                   int64(bufferSize),
+		readsAvailable:               make(chan int, channelsSlots),
+		readsAvailableSlotsAvailable: channelsSlots,
+		readsCompleted:               make(chan int, channelsSlots),
+		exitSignal:                   make(chan bool, 0),
 	}
 
 	// Run forever ...
@@ -61,13 +65,14 @@ func NewBufferedReader(upstream io.Reader, bufferSize, readSize int) (*BufferedR
 			writePosition := br.totalWritten % br.bufferSize
 			nextWriteSize := int64(minInt(int(br.bufferSize-writePosition), int(readSize)))
 
-			for spaceAvailable() < nextWriteSize {
+			for br.readsAvailableSlotsAvailable == 0 || spaceAvailable() < nextWriteSize {
 				select {
 				case r := <-br.readsCompleted:
 					if r == 0 {
 						return
 					}
 					br.totalReadReturned += int64(r)
+					br.readsAvailableSlotsAvailable++
 					continue
 				case <-br.exitSignal:
 					return
@@ -79,6 +84,7 @@ func NewBufferedReader(upstream io.Reader, bufferSize, readSize int) (*BufferedR
 			if n > 0 {
 				br.totalWritten += int64(n)
 				br.readsAvailable <- n
+				br.readsAvailableSlotsAvailable--
 			}
 
 			if err != nil {

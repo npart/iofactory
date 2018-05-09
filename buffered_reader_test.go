@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -22,20 +23,24 @@ func TestBufferedReaderSingleByte(t *testing.T) {
 }
 
 func TestBufferedReaderLarge(t *testing.T) {
-	testBufferedReader(t, 1<<24, 1000000, 8)
+	testBufferedReader(t, 1<<28, 1000000, 8)
 }
 
 func testBufferedReader(t *testing.T, length, readSize, iterations int) {
 
 	buf := RandomByteSlice(length * iterations) // Require recycling buffers a few times
+	bufCopied := make([]byte, len(buf)+100)
 	assert.NotNil(t, buf)
 
+	startTime := time.Now()
 	randReader := NewMaxSizeReader(NewRandomSizeReader(bytes.NewReader(buf)), readSize)
 	bufferedReader, err := NewBufferedReader(randReader, length, readSize)
 	assert.Nil(t, err)
 
-	bufCopied := make([]byte, len(buf)+100)
 	n, err := io.ReadFull(bufferedReader, bufCopied)
+	endTime := time.Now()
+	t.Logf("Length %v, Iterations %v -> %v MB, time %v", length, iterations, float64(len(buf))/(1024*1024), endTime.Sub(startTime))
+
 	assert.True(t, strings.Contains(err.Error(), "EOF"))
 
 	// Compare the buffers
