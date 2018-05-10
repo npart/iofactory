@@ -23,7 +23,11 @@ func TestBufferedReaderSingleByte(t *testing.T) {
 }
 
 func TestBufferedReaderLarge(t *testing.T) {
-	testBufferedReader(t, 1<<28, 1000000, 8)
+	testBufferedReader(t, 1234567, 1000000, 1024)
+}
+
+func TestBufferedReaderLargeSmallBuffer(t *testing.T) {
+	testBufferedReader(t, 12345, 1000, 100000)
 }
 
 func testBufferedReader(t *testing.T, length, readSize, iterations int) {
@@ -39,8 +43,11 @@ func testBufferedReader(t *testing.T, length, readSize, iterations int) {
 
 	n, err := io.ReadFull(bufferedReader, bufCopied)
 	endTime := time.Now()
-	t.Logf("Length %v, Iterations %v -> %v MB, time %v", length, iterations, float64(len(buf))/(1024*1024), endTime.Sub(startTime))
 
+	MB := float64(len(buf)) / (1024 * 1024)
+	elapsed := endTime.Sub(startTime)
+	MBPerSecond := MB * 1000000000 / float64(elapsed.Nanoseconds())
+	t.Logf("Length %v, Iterations %v -> %v MB, time %v, MB/s %0.3f", length, iterations, MB, elapsed, MBPerSecond)
 	assert.True(t, strings.Contains(err.Error(), "EOF"))
 
 	// Compare the buffers
