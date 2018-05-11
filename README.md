@@ -7,6 +7,22 @@ This package includes useful ioutil extensions that can be used to manipulate or
 
 To get the package use `go get -u github.com/npart/iofactory`.  The tests have pretty extensive use cases for these objects, which should be fairly self explanatory.
 
+
+### BufferedReader
+The BufferedReader (Readahead) is one of the primary classes of the iofactory libary.  This reader will read data into a circular buffer ahead of any downstream readers.  This reader is useful for proxying network data, where the proxy can receive all of the data from the backend server ahead of sending it out to the client, which may have a slower network connection.  This reader can also be used to easily separate a read and proces pipeline into multiple threads as this reader will start up its own goroutine to perform the read buffering.  Parameter tuning is subject to application needs.  For best performance, choose a buffer size and read size large enough to minimize the overhead of the read calls, somewhere in the range of 1MB and 64K respectively.  There are some benchmark tests one could use to find optimal buffer size.  When reading from disk one may choose to use larger values.
+
+```Go
+buf := iofactory.RandomByteSlice(1 << 28) // 256 MB of random data
+reader := bytes.NewReader(buf)
+bufferedReader, err := iofactory.NewBufferedReader(reader, 1<<20, 1<<16) // Buffer size of 1MB, read 64KB
+if err != nil {
+  log.Printf("err %v", err)
+  return
+}
+io.Copy(os.Stdout, bufferedReader) // process data or write to file, etc
+}
+```
+
 ### MaxSizeReader
 
 The MaxSizeReader will create a reader where each resulting read will be limited to a maximum size.  ioutil.ReadAll(), for example, may call Read() with a very large buffer, but the MaxSizeReader will limit each read to N bytes.  This is useful if the goal is to limit reads to smaller chunks.

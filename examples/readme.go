@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"io/ioutil"
 	"log"
@@ -67,6 +68,18 @@ func exampleBytesRepeatedReader() {
 	reader := iofactory.NewBytesRepeatedReader(buf, 3)
 	io.Copy(os.Stdout, reader)
 }
+
+func exampleBufferedReader() {
+	buf := iofactory.RandomByteSlice(1 << 24) // 16 MB of random data
+	reader := bytes.NewReader(buf)
+	bufferedReader, err := iofactory.NewBufferedReader(reader, 1<<20, 1<<16) // Buffer size of 1MB, read 64KB
+	if err != nil {
+		log.Printf("err %v", err)
+		return
+	}
+	io.Copy(os.Stdout, bufferedReader)
+}
+
 func main() {
 	exampleMaxSizeReader()
 	exampleRandomSizeReader()
