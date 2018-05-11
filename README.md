@@ -9,7 +9,7 @@ To get the package use `go get -u github.com/npart/iofactory`.  The tests have p
 
 
 ### BufferedReader
-The BufferedReader (Readahead) is one of the primary classes of the iofactory libary.  This reader will read data into a circular buffer ahead of any downstream readers.  This reader is useful for proxying network data, where the proxy can receive all of the data from the backend server ahead of sending it out to the client, which may have a slower network connection.  This reader can also be used to easily separate a read and proces pipeline into multiple threads as this reader will start up its own goroutine to perform the read buffering.  Parameter tuning is subject to application needs.  For best performance, choose a buffer size and read size large enough to minimize the overhead of the read calls, somewhere in the range of 1MB and 64K respectively.  There are some benchmark tests one could use to find optimal buffer size.  When reading from disk one may choose to use larger values.
+The BufferedReader (Readahead) is one of the primary classes of the iofactory libary.  This reader will read data into a circular buffer ahead of any downstream readers.  This reader is useful for proxying network data, where the proxy can receive all of the data from the backend server ahead of sending it out to the client, which may have a slower network connection.  This reader can also be used to easily separate read and process stages (e.g. compression) of a pipeline into multiple threads as this reader will start up its own goroutine to perform the read buffering.  Parameter tuning is subject to application needs.  For best performance, choose a buffer size and read size large enough to minimize the overhead of the read calls, somewhere in the range of 1MB and 64K respectively.  There are some benchmark tests one could use to find optimal buffer size.  When reading from disk one may choose to use larger values.
 
 ```Go
 buf := iofactory.RandomByteSlice(1 << 28) // 256 MB of random data
@@ -20,7 +20,6 @@ if err != nil {
   return
 }
 io.Copy(os.Stdout, bufferedReader) // process data or write to file, etc
-}
 ```
 
 ### MaxSizeReader
